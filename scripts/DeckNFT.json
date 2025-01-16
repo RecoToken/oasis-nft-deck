@@ -64,16 +64,16 @@
         "type": "uint256"
       },
       {
-        "indexed": true,
-        "internalType": "address",
-        "name": "owner",
-        "type": "address"
+        "indexed": false,
+        "internalType": "bytes32",
+        "name": "nonce",
+        "type": "bytes32"
       },
       {
         "indexed": false,
-        "internalType": "string",
-        "name": "metadataURI",
-        "type": "string"
+        "internalType": "bytes",
+        "name": "encryptedMetadataURI",
+        "type": "bytes"
       }
     ],
     "name": "BaseDeckMinted",
@@ -85,14 +85,14 @@
       {
         "indexed": true,
         "internalType": "uint256",
-        "name": "baseDeckId",
+        "name": "playerDeckId",
         "type": "uint256"
       },
       {
         "indexed": false,
-        "internalType": "string",
-        "name": "newMetadataURI",
-        "type": "string"
+        "internalType": "bytes",
+        "name": "encryptedMetadataURI",
+        "type": "bytes"
       }
     ],
     "name": "BaseMetadataUpdated",
@@ -122,6 +122,12 @@
     "inputs": [
       {
         "indexed": true,
+        "internalType": "address",
+        "name": "playerAddress",
+        "type": "address"
+      },
+      {
+        "indexed": true,
         "internalType": "uint256",
         "name": "baseDeckId",
         "type": "uint256"
@@ -129,14 +135,26 @@
       {
         "indexed": true,
         "internalType": "uint256",
-        "name": "cloneDeckId",
+        "name": "clonedDeckId",
         "type": "uint256"
       },
       {
-        "indexed": true,
-        "internalType": "address",
-        "name": "player",
-        "type": "address"
+        "indexed": false,
+        "internalType": "bytes32",
+        "name": "nonce",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes",
+        "name": "encryptedMetadataURI",
+        "type": "bytes"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes",
+        "name": "encryptedClonedMetadataURI",
+        "type": "bytes"
       }
     ],
     "name": "DeckCloned",
@@ -239,14 +257,24 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "player",
-        "type": "address"
+        "internalType": "bytes32",
+        "name": "key",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "nonce",
+        "type": "bytes32"
       },
       {
         "internalType": "uint256",
         "name": "baseDeckId",
         "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "userWalletAddress",
+        "type": "address"
       },
       {
         "internalType": "string",
@@ -263,6 +291,50 @@
     "inputs": [
       {
         "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "deckData",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "playerAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "baseDeckId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "clonedDeckId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "nonce",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "bytes",
+        "name": "encryptedMetadataURI",
+        "type": "bytes"
+      },
+      {
+        "internalType": "bytes",
+        "name": "encryptedClonedMetadataURI",
+        "type": "bytes"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
         "name": "tokenId",
         "type": "uint256"
       }
@@ -273,6 +345,55 @@
         "internalType": "address",
         "name": "",
         "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "key",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "uint256",
+        "name": "playerDeckId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getDeckDataWithDecryptedMetadata",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "playerAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "baseDeckId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "clonedDeckId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "nonce",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "string",
+        "name": "decryptedMetadataURI",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "decryptedClonedMetadataURI",
+        "type": "string"
       }
     ],
     "stateMutability": "view",
@@ -343,9 +464,9 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "backendWallet",
-        "type": "address"
+        "internalType": "bytes32",
+        "name": "key",
+        "type": "bytes32"
       },
       {
         "internalType": "string",
@@ -569,8 +690,13 @@
   {
     "inputs": [
       {
+        "internalType": "bytes32",
+        "name": "key",
+        "type": "bytes32"
+      },
+      {
         "internalType": "uint256",
-        "name": "baseDeckId",
+        "name": "playerDeckId",
         "type": "uint256"
       },
       {
