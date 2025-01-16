@@ -7,7 +7,7 @@ import "@oasisprotocol/sapphire-contracts/contracts/Sapphire.sol";
 
 contract DeckNFT is ERC721URIStorage, Ownable {
     uint256 private _currentTokenId;
-    mapping(uint256 => uint256) public linkedDecks;
+    mapping(uint256 => uint256) private linkedDecks;
 
     struct DeckData {
         address playerAddress;
@@ -18,7 +18,7 @@ contract DeckNFT is ERC721URIStorage, Ownable {
         bytes encryptedClonedMetadataURI;
     }
 
-    mapping(uint256 => DeckData) public deckData;
+    mapping(uint256 => DeckData) private deckData;
 
     event BaseDeckMinted(
         uint256 indexed baseDeckId,
@@ -218,5 +218,15 @@ contract DeckNFT is ERC721URIStorage, Ownable {
             return tokenURI(baseDeckId);
         }
         return tokenURI(deckId);
+    }
+
+    function tokenURI(
+        uint256 tokenId
+    ) public view override onlyOwner returns (string memory) {
+        require(
+            _exists(tokenId),
+            "ERC721URIStorage: URI query for nonexistent token"
+        );
+        return super.tokenURI(tokenId);
     }
 }
