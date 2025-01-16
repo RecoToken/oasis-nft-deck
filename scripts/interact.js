@@ -136,7 +136,7 @@ async function main() {
   const newMetadataclonedDeck = await deckNFT.getMetadataURI(clonedDeckId);
   console.log(`Updated Metadata URI for cloned deck ${clonedDeckId}:`, newMetadataclonedDeck);
 
-  getMetadataFromIPFS(newMetadata);
+  await getMetadataFromIPFS(newMetadata);
 
   // 5. Get deck data with decrypted metadata
   try {
