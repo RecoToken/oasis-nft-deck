@@ -2,6 +2,7 @@ require("dotenv").config();
 const { ethers } = require("ethers");
 const axios = require('axios');
 const sapphire = require('@oasisprotocol/sapphire-paratime');
+const { AEAD } = require("@oasisprotocol/deoxysii");
 
 const RPC_URL = process.env.RPC_URL;
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
@@ -17,12 +18,27 @@ const ABI = require("./DeckNFT.json");
 async function getMetadataFromIPFS(metadataURI) {
   try {
     const response = await axios.get(metadataURI);
-    console.log("\nMetadata JSON:", JSON.stringify(response.data));
+    console.log(`\nMetadata fetched from IPFS: ${JSON.stringify(response.data)}\n`);
 
     return response.data;
   } catch (error) {
     console.error("Error fetching metadata:", error.message);
   }
+}
+
+function hexToUint8Array(hexString) {
+  const cleanedHexString = hexString.startsWith('0x') ? hexString.slice(2) : hexString;
+  const uint8Array = new Uint8Array(
+    cleanedHexString.match(/.{1,2}/g).map(byte => parseInt(byte, 16))
+  );
+
+  return uint8Array;
+}
+
+function cleanDecodedURI(decryptedString) {
+  const filteredArray = decryptedString.filter(byte => byte !== 0);
+  const decodedBaseMetadataURI = new TextDecoder().decode(new Uint8Array(filteredArray));
+  return decodedBaseMetadataURI.trim().slice(1);
 }
 
 async function main() {
@@ -97,18 +113,18 @@ async function main() {
     console.error("Error minting cloned base deck:", error);
   }
 
-  // 3. Get metadata URI
-  console.log("\n================Fetching metadata URI...================");
-  console.log(`Fetching metadata URI for deck ID ${baseDeckId}...`);
-  const metadata = await deckNFT.getMetadataURI(baseDeckId);
-  console.log(`Metadata URI for deck ${baseDeckId}:`, metadata);
+  // // 3. Get metadata URI
+  // console.log("\n================Fetching metadata URI...================");
+  // console.log(`Fetching metadata URI for deck ID ${baseDeckId}...`);
+  // const metadata = await deckNFT.getMetadataURI(baseDeckId);
+  // console.log(`Metadata URI for deck ${baseDeckId}:`, metadata);
 
-  console.log(`\nFetching metadata URI for cloned deck ID ${clonedDeckId}...`);
-  const metadataCloned = await deckNFT.getMetadataURI(clonedDeckId);
-  console.log(`Metadata URI for cloned deck ${clonedDeckId}:`, metadataCloned);
+  // console.log(`\nFetching metadata URI for cloned deck ID ${clonedDeckId}...`);
+  // const metadataCloned = await deckNFT.getMetadataURI(clonedDeckId);
+  // console.log(`Metadata URI for cloned deck ${clonedDeckId}:`, metadataCloned);
 
 
-  // 4. Update base metadata URI
+  // 3. Update base metadata URI
   try {
     console.log(`\n================Updating metadata URI for deck ID ${clonedDeckId}...================`);
     const updateTx = await deckNFT.updateBaseMetadata(key ,clonedDeckId, NEW_METADATA_URI);
@@ -118,45 +134,51 @@ async function main() {
     const updateEvent = updateReceipt.logs
       .map((log) => deckNFT.interface.parseLog(log))
       .find((e) => e.name === "BaseMetadataUpdated");
-    console.log(`Updated Metadata URI: ${updateEvent.args.playerDeckId} ${updateEvent.args.encryptedMetadataURI}`);
+    console.log(`Updated Metadata URI => Deck ID:${updateEvent.args.playerDeckId} Encrypted URI:${updateEvent.args.encryptedMetadataURI}`);
   } catch (error) {
     console.error("Error nUpdating metadata deck:", error);
   }
 
-  // Fetch the updated metadata URI
-  const owner = await deckNFT.ownerOf(baseDeckId);
-  console.log("\nOwner of baseDeckId:", owner);
-  console.log(`Fetching updated metadata URI for deck ID ${baseDeckId}...`);
-  const newMetadata = await deckNFT.getMetadataURI(baseDeckId);
-  console.log(`Updated Metadata URI for deck ${baseDeckId}:`, newMetadata);
-
-  const ownerCloned = await deckNFT.ownerOf(clonedDeckId);
-  console.log("\nOwner of clonedBaseDeckId:", ownerCloned);
-  console.log(`Fetching updated metadata URI for cloned deck ID ${clonedDeckId}...`);
-  const newMetadataclonedDeck = await deckNFT.getMetadataURI(clonedDeckId);
-  console.log(`Updated Metadata URI for cloned deck ${clonedDeckId}:`, newMetadataclonedDeck);
-
-  await getMetadataFromIPFS(newMetadata);
-
-  // 5. Get deck data with decrypted metadata
+  // 4. Get deck data with decrypted metadata
   try {
-    console.log("\n================Fetching deck data with decrypted metadata...================");
-    const deckData = await deckNFT.getDeckDataWithDecryptedMetadata(key, clonedDeckId);
-    console.log(`deckData: ${deckData}`);
+    console.log("\n================Fetching deck data ...================");
+    const deckData = await deckNFT.getDeckData(clonedDeckId);
 
     const playerAddress = deckData[0];
-    const baseDeckId = deckData[1];
+    baseDeckId = deckData[1];
     clonedDeckId = deckData[2];
-    const nonce = deckData[3];
-    const decryptedMetadataURI = deckData[4];
-    const decryptedClonedMetadataURI = deckData[5];
+    nonce = deckData[3];
+    const encryptedMetadataURI = deckData[4];
+    const encryptedClonedMetadataURI = deckData[5];
 
-    console.log(`Player Address: ${playerAddress}`);
-    console.log(`Base Deck ID: ${baseDeckId.toString()}`);
-    console.log(`Cloned Deck ID: ${clonedDeckId.toString()}`);
-    console.log(`Nonce: ${ethers.utils.hexlify(nonce)}`);
-    console.log(`Decrypted Base Metadata URI: ${decryptedMetadataURI}`);
-    console.log(`Decrypted Cloned Metadata URI: ${decryptedClonedMetadataURI}`);
+    console.log(`Player Address: ${playerAddress}\n`);
+    console.log(`Base Deck ID: ${baseDeckId.toString()}\n`);
+    console.log(`Cloned Deck ID: ${clonedDeckId.toString()}\n`);
+    console.log(`Nonce: ${ethers.utils.hexlify(nonce)}\n`);
+    console.log(`Decrypted Base Metadata URI: ${encryptedMetadataURI}\n`);
+    console.log(`Decrypted Cloned Metadata URI: ${encryptedClonedMetadataURI}`);
+    console.log("================End of fetching deck data...================\n");
+
+
+    // DECRYPTION ON SERVER SIDE USING DEOXYSII
+    console.log("================Start of decryption...================");
+    const aead = new AEAD(key);
+    const nonceString = ethers.utils.hexlify(nonce);
+    const nonceArray = hexToUint8Array(nonceString).subarray(0, 15);
+    const associatedDataArray = new Uint8Array();
+
+    const encryptedBaseMetadataArray = hexToUint8Array(encryptedMetadataURI);
+    const decryptedBaseMetadataURI = aead.decrypt(nonceArray, encryptedBaseMetadataArray, associatedDataArray);
+    const cleanedStringBase = cleanDecodedURI(decryptedBaseMetadataURI);
+    console.log('cleanedStringBase:', cleanedStringBase);
+    await getMetadataFromIPFS(cleanedStringBase);
+
+    const encryptedClonedMetadataArray = hexToUint8Array(encryptedClonedMetadataURI);
+    const decryptedClonedMetadataURI = aead.decrypt(nonceArray, encryptedClonedMetadataArray, associatedDataArray);
+    const cleanedStringCloned = cleanDecodedURI(decryptedClonedMetadataURI);
+    console.log('cleanedStringCloned:', cleanedStringCloned);
+    await getMetadataFromIPFS(cleanedStringCloned);
+    console.log("================End of decryption...================\n");
 
   } catch (error) {
     console.error("Error fetching deck data:", error);

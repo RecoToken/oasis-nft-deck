@@ -309,17 +309,12 @@
   {
     "inputs": [
       {
-        "internalType": "bytes32",
-        "name": "key",
-        "type": "bytes32"
-      },
-      {
         "internalType": "uint256",
         "name": "playerDeckId",
         "type": "uint256"
       }
     ],
-    "name": "getDeckDataWithDecryptedMetadata",
+    "name": "getDeckData",
     "outputs": [
       {
         "internalType": "address",
@@ -342,33 +337,14 @@
         "type": "bytes32"
       },
       {
-        "internalType": "string",
-        "name": "decryptedMetadataURI",
-        "type": "string"
+        "internalType": "bytes",
+        "name": "encryptedMetadataURI",
+        "type": "bytes"
       },
       {
-        "internalType": "string",
-        "name": "decryptedClonedMetadataURI",
-        "type": "string"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "deckId",
-        "type": "uint256"
-      }
-    ],
-    "name": "getMetadataURI",
-    "outputs": [
-      {
-        "internalType": "string",
-        "name": "",
-        "type": "string"
+        "internalType": "bytes",
+        "name": "encryptedClonedMetadataURI",
+        "type": "bytes"
       }
     ],
     "stateMutability": "view",

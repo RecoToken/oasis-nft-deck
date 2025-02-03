@@ -59,7 +59,7 @@ contract DeckNFT is ERC721URIStorage, Ownable {
         _setTokenURI(newDeckId, metadataURI);
 
         bytes32 nonce = bytes32(Sapphire.randomBytes(32, ""));
-        bytes memory additionalData = "";
+        bytes memory additionalData = new bytes(0);
 
         bytes memory encryptedMetadataURI = Sapphire.encrypt(
             key,
@@ -96,7 +96,7 @@ contract DeckNFT is ERC721URIStorage, Ownable {
 
         linkedDecks[playerDeckId] = baseDeckId;
 
-        bytes memory additionalData = "";
+        bytes memory additionalData = new bytes(0);
         string memory baseMetadataURI = getMetadataURI(baseDeckId);
         bytes memory encryptedBaseMetadataURI = Sapphire.encrypt(
             key,
@@ -147,7 +147,7 @@ contract DeckNFT is ERC721URIStorage, Ownable {
 
         _setTokenURI(baseDeckId, newMetadataURI);
 
-        bytes memory additionalData = "";
+        bytes memory additionalData = new bytes(0);
         bytes memory encryptedMetadataURI = Sapphire.encrypt(
             key,
             nonce,
@@ -160,8 +160,7 @@ contract DeckNFT is ERC721URIStorage, Ownable {
         emit BaseMetadataUpdated(playerDeckId, encryptedMetadataURI);
     }
 
-    function getDeckDataWithDecryptedMetadata(
-        bytes32 key,
+    function getDeckData(
         uint256 playerDeckId
     )
         external
@@ -172,36 +171,18 @@ contract DeckNFT is ERC721URIStorage, Ownable {
             uint256 baseDeckId,
             uint256 clonedDeckId,
             bytes32 nonce,
-            string memory decryptedMetadataURI,
-            string memory decryptedClonedMetadataURI
+            bytes memory encryptedMetadataURI,
+            bytes memory encryptedClonedMetadataURI
         )
     {
         DeckData storage data = deckData[playerDeckId];
-
-        bytes memory additionalData = "";
-        bytes memory decryptedBaseMetadata = Sapphire.decrypt(
-            key,
-            data.nonce,
-            data.encryptedMetadataURI,
-            additionalData
-        );
-        bytes memory decryptedClonedMetadata = Sapphire.decrypt(
-            key,
-            data.nonce,
-            data.encryptedClonedMetadataURI,
-            additionalData
-        );
-
-        decryptedMetadataURI = string(decryptedBaseMetadata);
-        decryptedClonedMetadataURI = string(decryptedClonedMetadata);
-
         return (
             data.playerAddress,
             data.baseDeckId,
             data.clonedDeckId,
             data.nonce,
-            decryptedMetadataURI,
-            decryptedClonedMetadataURI
+            data.encryptedMetadataURI,
+            data.encryptedClonedMetadataURI
         );
     }
 
@@ -212,7 +193,7 @@ contract DeckNFT is ERC721URIStorage, Ownable {
      */
     function getMetadataURI(
         uint256 deckId
-    ) public view onlyOwner returns (string memory) {
+    ) private view onlyOwner returns (string memory) {
         if (linkedDecks[deckId] != 0) {
             uint256 baseDeckId = linkedDecks[deckId];
             return tokenURI(baseDeckId);
